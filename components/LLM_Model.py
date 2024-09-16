@@ -2,8 +2,8 @@ from sentence_transformers import SentenceTransformer
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFacePipeline
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
-from langchain_core.runnables import RunnablePassthrough, RunnableSequence
-from langchain_core.output_parsers import StrOutputParser
+from langchain.schema import StrOutputParser
+from langchain.schema.runnable import RunnablePassthrough
 from langchain.prompts import PromptTemplate
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 from transformers import pipeline
@@ -39,16 +39,18 @@ device = 'cuda'
 qa_pipeline = pipeline("question-answering", model=model,
                        tokenizer=tokenizer, device=device)
 
-llm = HuggingFacePipeline(pipeline=qa_pipeline)
+
+llm = HuggingFacePipeline(pipeline=qa_pipeline, model_kwargs={
+                          "max_length": 512, "truncation": True})
 
 template = """Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
-{context}
+Context: {context}
 
 Question: {question}
 Answer:"""
 
-prompt = PromptTemplate.from_template(template=template)
+prompt = PromptTemplate.from_template(template)
 
 retriever = vector_store.as_retriever(search_kwargs={"k": TOP_K_RESULTS})
 
@@ -57,8 +59,10 @@ def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 
-rag_chain = RunnableSequence({
-    "context": retriever | format_docs, "question": RunnablePassthrough()}
+rag_chain = ({
+    "context": retriever | format_docs,
+    "question": RunnablePassthrough()
+}
     | prompt
     | llm
     | StrOutputParser()
@@ -70,7 +74,7 @@ def process_llm(answers: str, sources: List[Document]):
     print("\nsources")
 
     for i, source in enumerate(sources, 1):
-        print(f"{i}-{source.page_content[:100]}...")
+        print(f"{i}-{source.page_content}...")
 
 
 def encode_query(query):
