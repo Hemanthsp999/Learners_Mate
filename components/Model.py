@@ -40,7 +40,7 @@ def main():
     if not os.path.exists(dirPath):
         raise ValueError("Dir Path not exists. Check once")
 
-    index = FaissBase.Initialize()
+    index = FaissBase.Initialize_DB()
     print(f"Index initialized successfully: {index}")
     for file_path in os.listdir(dirPath):
         file = os.path.join(dirPath, file_path)

@@ -28,7 +28,7 @@ embeddings = HuggingFaceEmbeddings(
 )
 
 
-def Initialize():
+def Initialize_DB():
     if os.path.exists(faiss_index_file):
         print("Loading file...")
         index = FAISS.load_local(

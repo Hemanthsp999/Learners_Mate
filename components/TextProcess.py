@@ -20,7 +20,7 @@ def list_to_sentence(dict_to_sentence: list[dict]) -> list[dict]:
     return dict_to_sentence
 
 
-chunk_size = 5
+chunk_size = 10
 
 
 def split_list(inputList: list[str], split_size: int) -> list[list[str]]:
