@@ -1,10 +1,14 @@
 from sentence_transformers import SentenceTransformer
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFacePipeline
-from langchain.chains import RetrievalQA
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
-from transformers import AutoTokenizer, DistilBertForQuestionAnswering
+from langchain_core.runnables import RunnablePassthrough, RunnableSequence
+from langchain_core.output_parsers import StrOutputParser
+from langchain.prompts import PromptTemplate
+from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 from transformers import pipeline
+from typing import List
+from langchain_core.documents import Document
 
 # NOTE: -y: yes & -n: no
 # 1. Collect Documents - y
@@ -27,20 +31,46 @@ embeddings = HuggingFaceEmbeddings(model_name=MODEL_NAME)
 vector_store = FAISS.load_local(
     FAISS_INDEX_FILE, embeddings=embeddings, allow_dangerous_deserialization=True)
 
-qa_model_name = "distilbert-base-uncased-distilled-squad"
-tokenizer = AutoTokenizer.from_pretrained(qa_model_name)
-model = DistilBertForQuestionAnswering.from_pretrained(qa_model_name)
+qa_model_name = "distilbert/distilbert-base-uncased"
 
-qa_pipeline = pipeline("question-answering", device="cuda",
-                       model=model, tokenizer=tokenizer)
+tokenizer = AutoTokenizer.from_pretrained(qa_model_name)
+model = AutoModelForQuestionAnswering.from_pretrained(qa_model_name)
+device = 'cuda'
+qa_pipeline = pipeline("question-answering", model=model,
+                       tokenizer=tokenizer, device=device)
 
 llm = HuggingFacePipeline(pipeline=qa_pipeline)
 
-qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    chain_type="stuff",
-    retriever=vector_store.as_retriever(search_kwargs={"k": TOP_K_RESULTS})
+template = """Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+
+{context}
+
+Question: {question}
+Answer:"""
+
+prompt = PromptTemplate.from_template(template=template)
+
+retriever = vector_store.as_retriever(search_kwargs={"k": TOP_K_RESULTS})
+
+
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
+
+rag_chain = RunnableSequence({
+    "context": retriever | format_docs, "question": RunnablePassthrough()}
+    | prompt
+    | llm
+    | StrOutputParser()
 )
+
+
+def process_llm(answers: str, sources: List[Document]):
+    print(f"\nAnswer: {answers}")
+    print("\nsources")
+
+    for i, source in enumerate(sources, 1):
+        print(f"{i}-{source.page_content[:100]}...")
 
 
 def encode_query(query):
@@ -57,7 +87,7 @@ def main():
     while True:
         query = input("\nEnter your query: ")
         # encodeQuery = FaissBase.embeddings.embed_query(query)
-        if query.lower() == 'quit' or query.lower() == 'exit':
+        if query.lower() in ['quit', 'exit']:
             print("Thank you for using the Learner's Mate System. Goodbye!")
             break
 
@@ -65,21 +95,15 @@ def main():
         # we pass encodeQuery[0] to similarity_search_by_vector().
         # This is because encode_query() returns a 2D array(for batch processing),
         # but we only need the first (and only) vector.
-        retriver = qa_chain.retriever.get_relevant_documents(query)
 
-        context = "".join([doc.page_content for doc in retriver])
-        if not context.strip():
-            continue
+        try:
+            answer = rag_chain.invoke(query)
+            docs = retriever.get_relevant_documents(query)
 
-        result = qa_pipeline({
-            "question": query,
-            "context": context
-        })
+            process_llm(answer, docs)
 
-        print("\nAnswer:", result['result'])
-        print("\nSources")
-        for doc in result['source_documents']:
-            print(f"- {doc.page_content[:100]}....")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
 
 if __name__ == "__main__":
