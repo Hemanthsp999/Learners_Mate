@@ -1,7 +1,7 @@
 import re
 import pandas as pd
-from spacy.lang.en import English
 from tqdm.auto import tqdm
+from spacy.lang.en import English
 
 nlp = English()
 nlp.add_pipe("sentencizer")
@@ -39,7 +39,7 @@ def split_sentence(sentence: list[str]) -> list[dict]:
     return sentence
 
 
-def Refactor_sentence(sentences: list[dict]) -> list[dict]:
+def sentence_to_chunks(sentences: list[dict]) -> list[dict]:
     sentence_and_chunks = []
 
     for page in tqdm(sentences):

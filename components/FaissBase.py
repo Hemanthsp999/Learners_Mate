@@ -1,26 +1,24 @@
 import os
-import numpy as np
+import shutil
 import faiss
 from tqdm.auto import tqdm
-from sentence_transformers import SentenceTransformer
 from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 
 
-model = SentenceTransformer('all-mpnet-base-v2')
-model.to(device="cuda")
-
-model_kwargs = {'device': 'cuda'}
+model_kwargs = {'device': 'cpu'}
 
 encode_kwargs = {'normalize_embeddings': False}
 
 
+# Path to store vector database file to conduct RAG operations
 faiss_index_file = "/home/hexa/LearnersMate/faiss_index_file"
-sentence_map_file = "sentence_map.pkl"
 
+# dimensions the tensors
 d = 768
 
+# embeddings to convert to sentences into some numerical values
 embeddings = HuggingFaceEmbeddings(
     model_name='all-mpnet-base-v2',
     model_kwargs=model_kwargs,
@@ -30,48 +28,26 @@ embeddings = HuggingFaceEmbeddings(
 
 def Initialize_DB():
     if os.path.exists(faiss_index_file):
-        print("Loading file...")
-        index = FAISS.load_local(
-            faiss_index_file, embeddings, allow_dangerous_deserialization=True)
+        print("wait removing file...")
+        try:
+            print(f"Wait removing {faiss_index_file} directory")
+            shutil.rmtree(faiss_index_file)
+        except Exception as e:
+            print(f"Error occurred while removing the directory: {str(e)}")
+
     else:
         print("File is creating")
-        index = faiss.IndexFlatL2(d)
+    index = faiss.IndexFlatL2(d)
     return index
 
 
-def embedding_funtion(sentences):
-    if isinstance(sentences, str):
-        sentences = [sentences]
-        '''
-    elif isinstance(sentences, dict):
-        sentences = [sentences['sentence_chunk']]
-        '''
-    elif not isinstance(sentences, list):
-        raise ValueError(
-            f"Expected a list of sentences but got {type(sentences)}")
-
-    embeds = model.encode(sentences, batch_size=32,
-                          device='cuda', convert_to_tensor=True)
-    embeds = embeds.cpu().numpy()
-    # print(f"Embeddings shape: {embeds.shape}")
-
-    if not isinstance(embeds, np.ndarray):
-        raise ValueError(
-            f"Expected Embeddings to numpy array but got: {type(embeds)}")
-
-    if len(embeds.shape) != 2:
-        raise ValueError(
-            f"Expected 2D array for embeddings but got : {embeds.shape}")
-
-    return embeds
-
-
-def Load_Vectors(page: list[dict]) -> FAISS:
+# convert sentences to embeddings and stores it in Vector DB
+def sentence_to_vectors(page: list[dict]) -> FAISS:
     print("Embedding sentences and adding to Faiss Index...")
 
     docs = [Document(page_content=sentence['sentence_chunks'])
             for sentence in tqdm(page, desc="Processing Sentences")]
-    print('Adding to Faiss')
+    print('Adding to Faiss...')
     db = FAISS.from_documents(docs, embeddings)
 
     return db
