@@ -8,7 +8,10 @@ The system allows users to upload educational materials (PDFs), processes these 
 ![flow_chart](images/FlowChart.png)
 
 ## Background Process:
-![BackgroundProcess](images/BackendProcess.webm)
+
+<video src="images/BackendProcess.webm" controls="controls" style="max-width: 100%;">
+   Your browser does not support the video tag.
+</video>
 
 # Setup:
 
