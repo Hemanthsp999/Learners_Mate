@@ -9,7 +9,7 @@ The system allows users to upload educational materials (PDFs), processes these 
 
 ## Background Process:
 
-<video src="images/BackendProcess.webm" controls="controls" style="max-width: 100%;">
+<video src="/home/hexa/LearnersMate/images/BackendProcess.webm" controls="controls" style="max-width: 100%;">
    Your browser does not support the video tag.
 </video>
 
