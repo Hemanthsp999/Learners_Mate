@@ -3,6 +3,10 @@
 Learners Mate is a locally-hosted Retrieval-Augmented Generation (RAG) application designed to assist users in retrieving context-based answers from academic PDFs or text documents.
 The system allows users to upload educational materials (PDFs), processes these into embeddings, and then uses a large language model to generate responses to user queries based on relevant document context.
 
+# How the model works ?
+
+![flow_chart](images/FlowChart.png)
+
 # Steps to run project:
 
 ## clone the Repo:

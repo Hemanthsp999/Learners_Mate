@@ -15,30 +15,41 @@ from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 
 app = Flask(__name__)
 
-# NOTE: -y: yes & -n: no
-# 1. Collect Documents - y
-# 2. Clean and Process the Documents into chunks - y
-# 3. Convert sentences into Embeddings - y
-# 4. Store it in vector DB - y
-# 5. LLM completed - y
+# NOTE: steps to follow
+# 1. Collect Documents
+# 2. Clean and Process the Documents into chunks
+# 3. Convert sentences into Embeddings
+# 4. Store it in vector DB
+# 5. Integrate LLM
+# 6. Give UI
 
 # Configuration
 FAISS_INDEX_FILE = "/home/hexa/LearnersMate/faiss_index_file"
+# Default PDF
+file_path = "/home/hexa/LearnersMate/PDF_Dataset/MachineLearning.pdf"
 MODEL_NAME = 'all-mpnet-base-v2'
 TOP_K_RESULTS = 5
+
 
 # Load the model and FAISS index
 print(f"Loading the SentenceTransformer model: {MODEL_NAME}")
 
 print(f"Loading the FAISS index from: {FAISS_INDEX_FILE}...")
 embeddings = HuggingFaceEmbeddings(model_name=MODEL_NAME)
-vector_store = FAISS.load_local(
-    FAISS_INDEX_FILE, embeddings=embeddings, allow_dangerous_deserialization=True)
+if os.path.exists(FAISS_INDEX_FILE):
+    print(f"Loading Faiss index file: {FAISS_INDEX_FILE}")
+    vector_store = FAISS.load_local(
+        FAISS_INDEX_FILE, embeddings=embeddings, allow_dangerous_deserialization=True)
+else:
+    print(f"Uploaded default file wait to load: {file_path}")
+    vector_store = Model.upload_file_to_vector(file_path)
 
 # Here i'm using distilbert/distilbert-base-uncased model
-qa_model_name = "distilbert/distilbert-base-uncased"
+# qa_model_name = "distilbert/distilbert-base-uncased"
+qa_model_name = "Intel/dynamic_tinybert"
 
-tokenizer = AutoTokenizer.from_pretrained(qa_model_name)
+tokenizer = AutoTokenizer.from_pretrained(
+    qa_model_name, padding=True, truncation=True, max_length=512)
 model = AutoModelForQuestionAnswering.from_pretrained(qa_model_name)
 device = 'cuda'
 qa_pipeline = pipeline("question-answering", model=model,
@@ -46,9 +57,9 @@ qa_pipeline = pipeline("question-answering", model=model,
 
 
 llm = HuggingFacePipeline(pipeline=qa_pipeline, model_kwargs={
-                          "max_length": 512, "truncation": True})
+    "temperature": 0.7, "max_length": 512})
 
-template = """Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+template = """ Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
 Key Points: {context}
 
@@ -60,7 +71,7 @@ retriever = vector_store.as_retriever(search_kwargs={"k": TOP_K_RESULTS})
 
 
 def format_docs(docs):
-    return "\n\n".join(doc.page_content for doc in docs)
+    return "\n".join(doc.page_content for doc in docs)
 
 
 rag_chain = (
@@ -92,17 +103,30 @@ def process_query():
     try:
         user_query = request.json.get("query")
 
-        answer = rag_chain.invoke(user_query)
+        # answer = rag_chain.invoke(user_query)
         docs = retriever.get_relevant_documents(user_query)
+        context = format_docs(docs)
+
+        qa_input = {"question": user_query, "context": context}
+
+        if isinstance(qa_input, dict):
+            qa_input_str = f"Question: {qa_input['question']}\nContext: {qa_input['context']}"
+        else:
+            qa_input_str = qa_input
+
+        answer = rag_chain.invoke(qa_input_str)
         sources = [doc.page_content for doc in docs]
         response = {
             "answer": answer,
             "sources": sources
         }
 
+        print(f"Response: {response}")
+
         return jsonify(response)
 
     except Exception as e:
+        print(f"Exception: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
