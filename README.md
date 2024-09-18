@@ -7,7 +7,17 @@ The system allows users to upload educational materials (PDFs), processes these 
 
 ![flow_chart](images/FlowChart.png)
 
-# Steps to run project:
+## Background Process:
+![BackgroundProcess](images/BackendProcess.webm)
+
+# Setup:
+
+# NOTE: Tested in Python 3.10.12, running on Linux(Pop OS) with a NVIDIA GTX 1650
+
+Minimum Requirements to run with GPU is more than 4GB
+If you've 4GB or below then use CPU (little bit slower compare to GPU)
+
+# Important Note: After uploading file, Restart Flask app.
 
 ## clone the Repo:
 

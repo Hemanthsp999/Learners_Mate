@@ -74,12 +74,15 @@ def upload_file_to_vector(file_path):
 
     df.to_csv(csvPath, mode='a', index=False)
     print(df.describe().round(2))
-    FaissBase.saveIndex(db=db, file_path=FaissBase.faiss_index_file)
+    vector_store = FaissBase.saveIndex(
+        db=db, file_path=FaissBase.faiss_index_file)
 
     # You can use this for wehter the DB is working as expected or not.
     query = "what is Process Model?"
     distance = FaissBase.search_similar_vectors(db, query)
     print(f"Answer: {distance[0].page_content}")
+
+    return vector_store
 
 
 # NOTE:

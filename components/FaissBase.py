@@ -56,6 +56,7 @@ def sentence_to_vectors(page: list[dict]) -> FAISS:
 def saveIndex(db: FAISS, file_path: str):
     print(f"Saving FAISS index to {file_path}...")
     db.save_local(file_path)
+    return db
 
 
 def search_similar_vectors(db: FAISS, query: str, k: int = 5):

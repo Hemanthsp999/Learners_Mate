@@ -1,4 +1,5 @@
 import os
+import time
 from typing import List
 from components import Model
 from transformers import pipeline
@@ -42,7 +43,11 @@ if os.path.exists(FAISS_INDEX_FILE):
         FAISS_INDEX_FILE, embeddings=embeddings, allow_dangerous_deserialization=True)
 else:
     print(f"Uploaded default file wait to load: {file_path}")
+    start_time = time.time()
     vector_store = Model.upload_file_to_vector(file_path)
+    end_time = time.time()
+
+    print(f"Total Time Taken to store vectors: {end_time - start_time: .2f}s")
 
 # Here i'm using distilbert/distilbert-base-uncased model
 # qa_model_name = "distilbert/distilbert-base-uncased"
@@ -67,6 +72,7 @@ Answer: """
 
 prompt = PromptTemplate.from_template(template)
 
+# retriever = vector_store.as_retriever(search_kwargs={"k": TOP_K_RESULTS})
 retriever = vector_store.as_retriever(search_kwargs={"k": TOP_K_RESULTS})
 
 
@@ -103,18 +109,9 @@ def process_query():
     try:
         user_query = request.json.get("query")
 
-        # answer = rag_chain.invoke(user_query)
+        answer = rag_chain.invoke(user_query)
         docs = retriever.get_relevant_documents(user_query)
-        context = format_docs(docs)
 
-        qa_input = {"question": user_query, "context": context}
-
-        if isinstance(qa_input, dict):
-            qa_input_str = f"Question: {qa_input['question']}\nContext: {qa_input['context']}"
-        else:
-            qa_input_str = qa_input
-
-        answer = rag_chain.invoke(qa_input_str)
         sources = [doc.page_content for doc in docs]
         response = {
             "answer": answer,
@@ -130,7 +127,7 @@ def process_query():
         return jsonify({"error": str(e)}), 500
 
 
-UPLOAD_FOLDER = '/home/hexa/LearnersMate/Dataset'
+UPLOAD_FOLDER = '/home/hexa/LearnersMate/TargetFolder/'
 Allowed_Extensions = {'pdf', 'txt'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -154,7 +151,8 @@ def upload_file():
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
 
-        Model.upload_file_to_vector(file_path)
+        vector_store = Model.upload_file_to_vector(file_path)
+        vector_store.load_local(FAISS_INDEX_FILE)
 
         return jsonify({"message": "file uploaded successfully"}), 200
 
