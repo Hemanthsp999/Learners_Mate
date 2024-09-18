@@ -14,7 +14,7 @@ The system allows users to upload educational materials (PDFs), processes these 
 Minimum Requirements to use GPU is more than <b>4GB</b>.
 If you've 4GB or below, then use CPU.
 
-### <u>Important Note: After uploading file, Restart Flask app</u>.
+### <ins>Important Note: After uploading file, Restart Flask app</ins>.
 
 ## clone the Repo:
 
