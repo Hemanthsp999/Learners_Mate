@@ -9,12 +9,14 @@ The system allows users to upload educational materials (PDFs), processes these 
 
 # How it looks:
 
-You can choose a default PDF to chat, in my case it's MachineLearning.pdf
+You can choose a default PDF to chat, in my case it's MachineLearning Textbook.
 ![UI](images/UI_01.png)
 ![UI](images/UI_02.png)
-<ins>After uploading file, you need to wait for some minutes to convert PDF's content into Embeddings</ins>
+
+<ins>After uploading file, you need to wait for some minutes to convert PDF's content into Embeddings.</ins>
 ![UI](images/UI_03.png)
-If file successfully uploads, this message will pop-up
+
+If file successfully uploads, this message will pop-up.
 ![UI](images/UI_04.png)
 ![UI](images/UI_05.png)
 
@@ -25,7 +27,7 @@ If file successfully uploads, this message will pop-up
 Minimum Requirements to use GPU is more than <b>4GB</b>.
 If you've 4GB or below, then use CPU.
 
-### <ins>Important Note: After uploading file, Restart Flask app</ins>.
+### <ins>Important Note: After uploading file, save LLM_Model.py and Restart Flask app</ins>.
 
 ## clone the Repo:
 

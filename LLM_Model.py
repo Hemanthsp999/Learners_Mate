@@ -50,7 +50,7 @@ else:
     end_time = time.time()
 
     print(
-        f"Total Time Taken to store vectors: {(end_time - start_time)/1000: .2f}s")
+        f"Total Time Taken to store vectors: {(end_time - start_time): .2f}s")
 
 # Here i'm using distilbert/distilbert-base-uncased model
 qa_model_name = "distilbert/distilbert-base-uncased"
@@ -163,7 +163,7 @@ def upload_file():
         vector_store = Model.upload_file_to_vector(file_path)
         end_time = time.time()
         print(
-            f"Total time taken to upload: {(end_time - start_time)/1000: .2f}s")
+            f"Total time taken to upload: {(end_time - start_time): .2f}s")
         vector_store.load_local(
             FAISS_INDEX_FILE, embeddings=embeddings, allow_dangerous_deserialization=True)
 
