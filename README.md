@@ -7,6 +7,17 @@ The system allows users to upload educational materials (PDFs), processes these 
 
 ![flow_chart](images/FlowChart.png)
 
+# How it looks:
+
+You can choose a default PDF to chat, in my case it's MachineLearning.pdf
+![UI](images/UI_01.png)
+![UI](images/UI_02.png)
+<ins>After uploading file, you need to wait for some minutes to convert PDF's content into Embeddings</ins>
+![UI](images/UI_03.png)
+If file successfully uploads, this message will pop-up
+![UI](images/UI_04.png)
+![UI](images/UI_05.png)
+
 # Setup:
 
 ### NOTE: Tested in Python 3.10.12, running on Linux(Pop OS) with a NVIDIA GTX 1650

@@ -7,6 +7,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 
 
+# NOTE: replace to "cpu" if you don't have "cuda" -> "GPU".
 model_kwargs = {'device': 'cpu'}
 
 encode_kwargs = {'normalize_embeddings': False}
@@ -15,7 +16,7 @@ encode_kwargs = {'normalize_embeddings': False}
 # Path to store vector database file to conduct RAG operations
 faiss_index_file = "/home/hexa/LearnersMate/faiss_index_file"
 
-# dimensions the tensors
+# dimensions of tensors
 d = 768
 
 # embeddings to convert to sentences into some numerical values

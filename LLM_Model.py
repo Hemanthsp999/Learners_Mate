@@ -17,17 +17,19 @@ from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 app = Flask(__name__)
 
 # NOTE: steps to follow
-# 1. Collect Documents
-# 2. Clean and Process the Documents into chunks
-# 3. Convert sentences into Embeddings
-# 4. Store it in vector DB
-# 5. Integrate LLM
-# 6. Give UI
+# 1. PDF Documents.
+# 2. Process and make it into sentences.
+# 3. Convert Sentences into small chunks of size 10 i.e [sentence1,sentence2...10].
+# 4. convert those chunks into embeddings i.e sentence into vectors or tensors.
+# 5. Store vectors in FAISS vector database.
+# 6. Integrage LLM .
+# 7. User Query.
 
 # Configuration
 FAISS_INDEX_FILE = "/home/hexa/LearnersMate/faiss_index_file"
+
 # Default PDF
-file_path = "/home/hexa/LearnersMate/PDF_Dataset/MachineLearning.pdf"
+FILE_PATH = "/home/hexa/LearnersMate/PDF_Dataset/MachineLearning.pdf"
 MODEL_NAME = 'all-mpnet-base-v2'
 TOP_K_RESULTS = 5
 
@@ -42,23 +44,27 @@ if os.path.exists(FAISS_INDEX_FILE):
     vector_store = FAISS.load_local(
         FAISS_INDEX_FILE, embeddings=embeddings, allow_dangerous_deserialization=True)
 else:
-    print(f"Uploaded default file wait to load: {file_path}")
+    print(f"Uploaded default file wait to load: {FILE_PATH}")
     start_time = time.time()
-    vector_store = Model.upload_file_to_vector(file_path)
+    vector_store = Model.upload_file_to_vector(FILE_PATH)
     end_time = time.time()
 
-    print(f"Total Time Taken to store vectors: {end_time - start_time: .2f}s")
+    print(
+        f"Total Time Taken to store vectors: {(end_time - start_time)/1000: .2f}s")
 
 # Here i'm using distilbert/distilbert-base-uncased model
-# qa_model_name = "distilbert/distilbert-base-uncased"
-qa_model_name = "Intel/dynamic_tinybert"
+qa_model_name = "distilbert/distilbert-base-uncased"
+# qa_model_name = "Intel/dynamic_tinybert"
+# qa_model_name = "deepset/roberta-base-squad2"
 
 tokenizer = AutoTokenizer.from_pretrained(
     qa_model_name, padding=True, truncation=True, max_length=512)
 model = AutoModelForQuestionAnswering.from_pretrained(qa_model_name)
-device = 'cuda'
-qa_pipeline = pipeline("question-answering", model=model,
-                       tokenizer=tokenizer, device=device)
+
+# NOTE: replace to "cpu" if you don't have "cuda" -> "GPU".
+device = 'cpu'
+qa_pipeline = pipeline(task="question-answering", model=model,
+                       tokenizer=tokenizer, device=device, return_tensors='pt')
 
 
 llm = HuggingFacePipeline(pipeline=qa_pipeline, model_kwargs={
@@ -108,8 +114,10 @@ def Home():
 def process_query():
     try:
         user_query = request.json.get("query")
+        print(f"user query: {user_query}")
 
         answer = rag_chain.invoke(user_query)
+        print(f"answers: {answer}")
         docs = retriever.get_relevant_documents(user_query)
 
         sources = [doc.page_content for doc in docs]
@@ -151,8 +159,16 @@ def upload_file():
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
 
+        start_time = time.time()
         vector_store = Model.upload_file_to_vector(file_path)
-        vector_store.load_local(FAISS_INDEX_FILE)
+<<<<<<< HEAD
+        end_time = time.time()
+        print(
+            f"Total time taken to upload: {(end_time - start_time)/1000: .2f}s")
+=======
+>>>>>>> 99758c7d879516a8062d66bec3609c53298846d2
+        vector_store.load_local(
+            FAISS_INDEX_FILE, embeddings=embeddings, allow_dangerous_deserialization=True)
 
         return jsonify({"message": "file uploaded successfully"}), 200
 
