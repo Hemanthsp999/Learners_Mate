@@ -161,12 +161,9 @@ def upload_file():
 
         start_time = time.time()
         vector_store = Model.upload_file_to_vector(file_path)
-<<<<<<< HEAD
         end_time = time.time()
         print(
             f"Total time taken to upload: {(end_time - start_time)/1000: .2f}s")
-=======
->>>>>>> 99758c7d879516a8062d66bec3609c53298846d2
         vector_store.load_local(
             FAISS_INDEX_FILE, embeddings=embeddings, allow_dangerous_deserialization=True)
 
