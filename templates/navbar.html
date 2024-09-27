@@ -136,7 +136,7 @@
           .then((response) => response.json())
           .then((data) => {
             if (data.error) {
-              addMessage(`Note: ${data.error}`, "bot-message");
+              addMessage(`Error: ${data.error}`, "bot-message");
             } else {
               // Add LLM answer to chat
               addMessage(data.answer, "bot-message");

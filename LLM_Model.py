@@ -12,7 +12,7 @@ from langchain_huggingface import HuggingFacePipeline
 from langchain.schema.runnable import RunnablePassthrough
 from flask import Flask, render_template, request, jsonify
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
-from transformers import AutoTokenizer, AutoModelForQuestionAnswering
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 app = Flask(__name__)
 
@@ -52,31 +52,31 @@ else:
     print(
         f"Total Time Taken to store vectors: {(end_time - start_time): .2f}s")
 
-# Here i'm using distilbert/distilbert-base-uncased model
-qa_model_name = "distilbert/distilbert-base-uncased"
-# qa_model_name = "Intel/dynamic_tinybert"
-# qa_model_name = "deepset/roberta-base-squad2"
+# LLM model -> "google/flan-t5-base"
+qa_model_name = "google/flan-t5-base"
 
 tokenizer = AutoTokenizer.from_pretrained(
     qa_model_name, padding=True, truncation=True, max_length=512)
-model = AutoModelForQuestionAnswering.from_pretrained(qa_model_name)
+model = AutoModelForSeq2SeqLM.from_pretrained(qa_model_name)
 
 # NOTE: replace to "cpu" if you don't have "cuda" -> "GPU".
 device = 'cpu'
-qa_pipeline = pipeline(task="question-answering", model=model,
-                       tokenizer=tokenizer, device=device, return_tensors='pt')
+qa_pipeline = pipeline("text2text-generation", model=model,
+                       tokenizer=tokenizer, device=device)
 
 
-llm = HuggingFacePipeline(pipeline=qa_pipeline, model_kwargs={
-    "temperature": 0.7, "max_length": 512})
+llm = HuggingFacePipeline(pipeline=qa_pipeline)
+template = """
+Use the following pieces of context to answer the question at the end. If you don't know the answer or if the question is not related to the given context, please respond with "I'm sorry, but I don't have enough information to answer that question based on the provided context."
 
-template = """ Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+Context: {context}
 
-Key Points: {context}
+Question: {question}
 
-Answer: """
-
-prompt = PromptTemplate.from_template(template)
+Answer:
+"""
+prompt = PromptTemplate.from_template(
+    template=template)
 
 # retriever = vector_store.as_retriever(search_kwargs={"k": TOP_K_RESULTS})
 retriever = vector_store.as_retriever(search_kwargs={"k": TOP_K_RESULTS})
@@ -121,9 +121,16 @@ def process_query():
         docs = retriever.get_relevant_documents(user_query)
 
         sources = [doc.page_content for doc in docs]
+
+        if "I don't have enough information to answer this question" in answer:
+            relelvance = "Not Relevance"
+        else:
+            relelvance = "Relevance"
+
         response = {
             "answer": answer,
-            "sources": sources
+            "sources": sources,
+            "Relevance": relelvance
         }
 
         print(f"Response: {response}")
@@ -136,6 +143,7 @@ def process_query():
 
 
 UPLOAD_FOLDER = '/home/hexa/LearnersMate/TargetFolder/'
+# only Pdf and txt format documents are allowed. You can furthur alter this.
 Allowed_Extensions = {'pdf', 'txt'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
