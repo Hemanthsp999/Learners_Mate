@@ -29,7 +29,7 @@ If you've 4GB or below, then use CPU.
 
 ### <ins>Important Note: After uploading file, save LLM_Model.py and Restart Flask app</ins>.
 
-## clone the Repo:
+## Clone Repo:
 
 ```bash
  git clone "repo_code"
@@ -40,7 +40,7 @@ If you've 4GB or below, then use CPU.
 cd "repo_dir"
 ```
 
-create a virtual environment and activate
+Create a virtual environment and activate
 
 ```bash
 source "_env/bin/activate"
@@ -53,7 +53,7 @@ pip freeze > requirements.txt
 pip install -r requirements.txt
 ```
 
-Final step:
+Run model:
 
 ```bash
 python LLM_Model.py
