@@ -17,13 +17,11 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 app = Flask(__name__)
 
 # NOTE: steps to follow
-# 1. PDF Documents.
-# 2. Process and make it into sentences.
-# 3. Convert Sentences into small chunks of size 10 i.e [sentence1,sentence2...10].
-# 4. convert those chunks into embeddings i.e sentence into vectors or tensors.
-# 5. Store vectors in FAISS vector database.
-# 6. Integrage LLM .
-# 7. User Query.
+# 1.Extract and process text from PDFs.
+# 2.Split text into chunks and generate embeddings.
+# 3.Store these embeddings in a FAISS index.
+# 4.Use these embeddings to retrieve relevant content for user queries.
+# 5.Generate answers using a language model based on the retrieved content.
 
 # Configuration
 FAISS_INDEX_FILE = "/home/hexa/LearnersMate/faiss_index_file"

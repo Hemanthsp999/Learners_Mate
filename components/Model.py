@@ -83,9 +83,3 @@ def upload_file_to_vector(file_path):
     print(f"Answer: {distance[0].page_content}")
 
     return vector_store
-
-
-# NOTE:
-''' uncomment the below comment before running the project and run once at the starting '''
-''' And run the Model.py to create faiss_index_file directory '''
-# upload_file_to_vector(file_path)
