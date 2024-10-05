@@ -1,12 +1,12 @@
 import os
 import time
-from typing import List
+# from typing import List
 from components import Model
 from transformers import pipeline
 from werkzeug.utils import secure_filename
 from langchain.schema import StrOutputParser
 from langchain.prompts import PromptTemplate
-from langchain_core.documents import Document
+# from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFacePipeline
 from langchain.schema.runnable import RunnablePassthrough
@@ -24,10 +24,10 @@ app = Flask(__name__)
 # 5.Generate answers using a language model based on the retrieved content.
 
 # Configuration
-FAISS_INDEX_FILE = "/home/hexa/LearnersMate/faiss_index_file"
+FAISS_INDEX_FILE = "faiss_index_file"
 
 # Default PDF
-FILE_PATH = "/home/hexa/LearnersMate/PDF_Dataset/MachineLearning.pdf"
+FILE_PATH = "PDF_Dataset/MachineLearning.pdf"
 MODEL_NAME = 'all-mpnet-base-v2'
 TOP_K_RESULTS = 5
 
@@ -42,7 +42,7 @@ if os.path.exists(FAISS_INDEX_FILE):
     vector_store = FAISS.load_local(
         FAISS_INDEX_FILE, embeddings=embeddings, allow_dangerous_deserialization=True)
 else:
-    print(f"Uploaded default file wait to load: {FILE_PATH}")
+    print(f"Uploading default file wait to load: {FILE_PATH}")
     start_time = time.time()
     vector_store = Model.upload_file_to_vector(FILE_PATH)
     end_time = time.time()
@@ -50,7 +50,7 @@ else:
     print(
         f"Total Time Taken to store vectors: {(end_time - start_time): .2f}s")
 
-# LLM model -> "google/flan-t5-base"
+# LLM model -> "google/flan-t5-base" its a fine-tuned model
 qa_model_name = "google/flan-t5-base"
 
 tokenizer = AutoTokenizer.from_pretrained(
@@ -94,13 +94,15 @@ rag_chain = (
     | StrOutputParser()
 )
 
-
+'''
 def process_llm(answers: str, sources: List[Document]):
     print(f"\nAnswer: {answers}")
     print("\nsources")
 
     for i, source in enumerate(sources, 1):
         print(f"{i}-{source.page_content}...")
+
+'''
 
 
 @app.route("/")
@@ -170,10 +172,11 @@ def upload_file():
         end_time = time.time()
         print(
             f"Total time taken to upload: {(end_time - start_time): .2f}s")
+        print(f"{FAISS_INDEX_FILE} saved successfully. You can start chat!.")
         vector_store.load_local(
             FAISS_INDEX_FILE, embeddings=embeddings, allow_dangerous_deserialization=True)
 
-        return jsonify({"message": "file uploaded successfully"}), 200
+        return jsonify({"message": "File uploaded successfully"}), 200
 
 
 if __name__ == "__main__":
