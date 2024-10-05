@@ -59,4 +59,4 @@ Run model:
 python LLM_Model.py
 ```
 
-If you enjoy using this project or find it helpful, don't forget to give it a ⭐️ to support its development!
+## If you enjoy using this project or find it helpful, don't forget to give it a ⭐️ to support its development!
