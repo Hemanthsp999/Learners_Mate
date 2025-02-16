@@ -17,11 +17,11 @@ encode_kwargs = {'normalize_embeddings': False}
 faiss_index_file = "/home/hexa/LearnersMate/faiss_index_file"
 
 # dimensions of tensors
-d = 768
+d = 384
 
 # embeddings to convert to sentences into some numerical values
 embeddings = HuggingFaceEmbeddings(
-    model_name='all-mpnet-base-v2',
+    model_name='all-MiniLM-L6-v2',
     model_kwargs=model_kwargs,
     encode_kwargs=encode_kwargs
 )

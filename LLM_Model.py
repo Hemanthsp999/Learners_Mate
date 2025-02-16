@@ -10,9 +10,10 @@ from langchain.prompts import PromptTemplate
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFacePipeline
 from langchain.schema.runnable import RunnablePassthrough
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from collections import deque
 
 app = Flask(__name__)
 
@@ -26,9 +27,12 @@ app = Flask(__name__)
 # Configuration
 FAISS_INDEX_FILE = "faiss_index_file"
 
+# Memory length
+CONVERSATION_MEMORY_LENGTH = 5
+
 # Default PDF
 FILE_PATH = "PDF_Dataset/MachineLearning.pdf"
-MODEL_NAME = 'all-mpnet-base-v2'
+MODEL_NAME = 'all-MiniLM-L6-v2'
 TOP_K_RESULTS = 5
 
 
@@ -71,7 +75,6 @@ Context: {context}
 
 Question: {question}
 
-Answer:
 """
 prompt = PromptTemplate.from_template(
     template=template)
@@ -80,14 +83,38 @@ prompt = PromptTemplate.from_template(
 retriever = vector_store.as_retriever(search_kwargs={"k": TOP_K_RESULTS})
 
 
+def get_conversation_history():
+    if 'conversation_history' not in session:
+        session['conversation_history'] = deque(
+            maxlen=CONVERSATION_MEMORY_LENGTH)
+
+    return session['conversation_history']
+
+
+def update_conversation_history(user_query, answer, source):
+
+    conversation_history = get_conversation_history()
+    conversation_history.append(
+        {"query": user_query, "answer": answer, "sources": source})
+    session['conversation_history'] = conversation_history
+
+
+def retrieve_conversation_context():
+    conversation_history = get_conversation_history()
+    context = "\n\n".join(
+        f"User: {entry['query']}\nAnswer: {entry['answer']}" for entry in conversation_history
+    )
+    return context
+
+
 def format_docs(docs):
-    return "\n".join(doc.page_content for doc in docs)
+    return "\n\n".join(doc.page_content for doc in docs)
 
 
 rag_chain = (
     {
-        "context": retriever | format_docs,
-        "question": RunnablePassthrough()
+        "context":  retriever | format_docs,
+        "question": RunnablePassthrough(),
     }
     | prompt
     | llm
